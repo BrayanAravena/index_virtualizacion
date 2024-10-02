@@ -34,7 +34,7 @@
     font-size: 1.2em;
     text-transform: uppercase; }
   .calendar__prev, .calendar__next {
-    color: #C7F464;
+    color: #eeea00;
     cursor: pointer;
     font-size: 1.3em; }
   .calendar__prev {
@@ -51,9 +51,9 @@
     text-align: center;
     line-height: 2; }
   .calendar__today {
-    background: #0374ae;
+    background: #00bfef;
     color: white;
-    width: 70%;
+    width: 100%;
     /*border-radius: 50%;*/
     margin: auto; }
   .calendar__last-days {

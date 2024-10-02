@@ -168,12 +168,12 @@ die();
 	<link rel="stylesheet" href="https://campus.unap.cl/generalidades/lib/bootstrap-4.5.2/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://campus.unap.cl/generalidades/lib/fontawesome-5.12.0/css/all.min.css">
 	<link rel="stylesheet" href="https://campus.unap.cl/generalidades/lib/toastr-2.1.3/css/toastr-2.1.3.min.css">
-	<link rel="styleshet" href="index/plugins/toastr/toastr.min.css">
-
+	<link rel="stylesheet" href="index/plugins/toastr/toastr.min.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 	<style>
 		
 		.calendar__date.selected {
-        	background-color: #127fa4; 
+        	background-color: #606060; 
         	color: #fff;
         	cursor: pointer; /* Cambiar el cursor al hacer hover */
 
@@ -441,7 +441,10 @@ die();
 							</table>	
 		                 	<div style="display: inline-block;">
 							<p style="color: #f70505;">* Este símbolo indica que son campos obligatorio</p>
-							<input type="submit"target="_blank" value="Enviar reporte pdf" class="btn btn-danger btn-sm">
+							
+							<input type="hidden" name="enviar_hdn" value="get" />
+							<input type="button" id="enviar-reporte" value="Enviar reporte pdf" name="enviar_btn" class="btn btn-danger btn-sm">
+
 							</form>
 							<!--<a href="http://localhost/index/reporte_online.php" target="_blank" class="btn btn-danger btn-sm">Ver reporte en PDF</a>-->
 							<!--<a href="https://campus.unap.cl/aula_virtual/presentacion/reporte_virtualizacion_preview.php?kcode=<?=$kcode?>" target="_blank" class="btn btn-danger btn-sm">Ver reporte en PDF</a>-->
@@ -454,42 +457,123 @@ die();
 	</div>
 	
 	<br><br>
-	<script src="/index/index/js/script1.js"></script>
+	<script src="js\script1.js"></script>
     <script src="https://campus.unap.cl/generalidades/lib/jquery-3.3.1/jquery-3.3.1.min.js"></script>
 	<script src="https://campus.unap.cl/generalidades/lib/bootstrap-4.5.2/js/bootstrap.bundle.min.js"></script>
 	<script src="https://campus.unap.cl/generalidades/lib/toastr-2.1.3/js/toastr-2.1.3.min.js"></script>
 	<script src="/index/plugins/toastr/toastr.min.js"></script>
-	
 
+
+	
 	
 <script>
+$(document).ready(function() {
+    toastr.options = {
+        "preventDuplicates": true
+    };
 
-	$(document).ready(function() {
-		toastr.options = {
-			"preventDuplicates": true
-		}
-		function validarCampos() {
-			// Verificamos si los tres campos obligatorios están marcados
-			const campoGuiar = document.getElementById('flexCheckDefault');
-			const campoGuiar1 = document.getElementById('flexCheckDefault1');
-			const campoGuiar2 = document.getElementById('flexCheckDefault2');
-			if (!(campoGuiar.checked && campoGuiar1.checked && campoGuiar2.checked)) {
-				toastr.error("Tiene que seleccionar los tres primeros campos obligatorios", "ERROR");
-				return;
-			} else {	
-				// Agregamos un evento al botón que marcará el día seleccionado
-				document.getElementById('guardar-sesiones').addEventListener('click', function() {
-					marcarDiaSeleccionado();	
-					toastr.success("Guardado Exitoso", "Guardado");
-				});
-			}
-		}
-		$("#guardar-sesiones").click(function() {
-			validarCampos();
-		});
-	});
+    let selectedDate = null;
+    let checkboxStates = {};  // Objeto para almacenar los estados de los checkboxes por día
+
+    function validarCampos() {
+        // Verificamos si los tres campos obligatorios están marcados
+        const campoGuiar = document.getElementById('flexCheckDefault');
+        const campoGuiar1 = document.getElementById('flexCheckDefault1');
+        const campoGuiar2 = document.getElementById('flexCheckDefault2');
+
+        if (!(campoGuiar.checked && campoGuiar1.checked && campoGuiar2.checked)) {
+            toastr.error("Tiene que seleccionar los tres primeros campos obligatorios", "ERROR");
+            return false; // Retorna false si no se validan los campos
+        }
+        return true; // Retorna true si todos los campos son válidos
+    }
+
+    // Función para limpiar los checkboxes
+    function limpiarCheckboxes() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = false;
+        });
+    }
+
+    // Función para restaurar los checkboxes según el día seleccionado
+    function restaurarCheckboxes(day) {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        if (checkboxStates[day]) {
+            checkboxes.forEach(function(checkbox, index) {
+                checkbox.checked = checkboxStates[day][index] || false;  // Restaura el estado si existe
+            });
+        } else {
+            limpiarCheckboxes();  // Si no hay estado guardado, limpiar checkboxes
+        }
+    }
+
+    // Función para marcar el día seleccionado de verde con letras blancas
+    function marcarDiaSeleccionado() {
+        $('.calendar__date').each(function() {
+            if ($(this).text() === selectedDate) {
+                $(this).css({
+                    'background-color': 'green',
+                    'color': 'white'
+                });
+            }
+        });
+    }
+
+    // Evento para guardar los cambios y marcar el día seleccionado
+    $("#guardar-sesiones").on('click', function() {
+        // Primero validamos los campos
+        if (validarCampos()) {
+            if (selectedDate) {
+                // Guardamos el estado actual de los checkboxes para el día seleccionado
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                checkboxStates[selectedDate] = Array.from(checkboxes).map(checkbox => checkbox.checked);
+
+                // Marca el día seleccionado de verde con letras blancas
+                marcarDiaSeleccionado();
+
+                toastr.success(`Cambios guardados para el día ${selectedDate}`, "Guardado");
+            } else {
+                toastr.error("Debe seleccionar un día antes de guardar los cambios", "ERROR");
+            }
+        }
+    });
+
+    // Evento para seleccionar un día y cargar sus checkboxes
+    $('.calendar__date').on('click', function() {
+        const clickedDate = $(this).text();
+
+        // Actualizar el día seleccionado
+        selectedDate = clickedDate;
+
+        // Restaurar los checkboxes para el nuevo día seleccionado
+        restaurarCheckboxes(selectedDate);
+
+        // Mostrar mensaje de día seleccionado
+        $('#selected-date').text(`Evaluando el día: ${selectedDate}`);
+    });
+});
 
 </script>
+
+
+<script>
+{
+document.getElementById("enviar-reporte").onclick =
+ValidarDatosGet;
+}
+</script>
+
+
+<script>
+
+document.getElementById('enviar-reporte').addEventListener('click', () => {
+    const element = document.getElementById('pdf-container');
+    html2pdf().from(element).save('reporte_online.pdf');
+    });
+</script>
+
+
 
 <script>
 	// Selecciona el contenedor de fechas
@@ -497,21 +581,6 @@ die();
 	const datesContainer = document.getElementById('dates');
 	let selectedDate = null;
 	const clickedDate = new Date();
-
-	const unmarkToday = () => {
-		const currentToday = document.querySelector('.calendar__today');
-		if (currentToday) {
-			currentToday.classList.remove('calendar__today');
-		}
-	}
-	// Función para cambiar el color del día seleccionado a verde
-	function marcarDiaSeleccionado() {
-		if (selectedDate) {
-			selectedDate.style.backgroundColor = 'green'; // Verde
-			//selectedDate.classList.add('disabled');
-			selectedDate.style.cursor = 'not-allowed';
-		}
-	}
 	// Agrega un evento al contenedor de fechas para detectar clics en los días
 	datesContainer.addEventListener('click', function(event) {
 		const clickedDate = event.target;
@@ -537,15 +606,18 @@ die();
 
    
 </script>
+
+
 <script>
-	//para que al momento de cargar la pagina se eliminen los checkbox
-	window.addEventListener('load', function() {
-		const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-		checkboxes.forEach(function(checkbox) {
-			checkbox.checked = false;
-		});
-		});
+// Para que al momento de cargar la página se eliminen los checkboxes
+window.addEventListener('', function() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = false;
+    });
+});
 </script>
+
 
 
 <script>

@@ -37,6 +37,7 @@ for (let i = startDay(); i > 0; i--) {
     for(let i=1; i<=getTotalDays(month); i++){
         let dayElement =document.createElement('div');
         dayElement.className = 'calendar__date calendar__item';
+
         if (i === currentDay && monthNumber === month && currentYear === currentYear) {
             dayElement.classList.add('calendar__today');
         }
@@ -46,6 +47,8 @@ for (let i = startDay(); i > 0; i--) {
         }
         dayElement.textContent = i;
         datesContainer.appendChild(dayElement);
+
+        
     } 
 }
 
